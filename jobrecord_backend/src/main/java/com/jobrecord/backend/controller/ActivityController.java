@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -71,5 +72,18 @@ public class ActivityController {
     ) {
         activityService.deleteActivity(userDetails.getUserId(), activityId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/monthly")
+    public MonthlyReportResponse getMonthlyReport(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate
+    ) {
+        return activityService.getMonthlyReport(
+                userDetails.getUserId(),
+                startDate,
+                endDate
+        );
     }
 }

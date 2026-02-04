@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     },
 
     subTitleRow: {
+        marginTop: 4,
         flexDirection: 'row',
         gap: 4,
         alignItems: 'flex-end',

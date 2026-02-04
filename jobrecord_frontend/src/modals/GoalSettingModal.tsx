@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Modal,
     View,
@@ -9,6 +9,7 @@ import {
 import AppText from '@/src/components/AppText';
 import { useTheme } from '@/src/theme/ThemeContext';
 import CloseIcon from "@/assets/icons/close.svg";
+import {useGoal} from "@/src/hooks/useGoal";
 
 interface GoalSettingModalProps {
     visible: boolean;
@@ -17,19 +18,42 @@ interface GoalSettingModalProps {
 }
 
 export default function GoalSettingModal({
-                                             visible,
-                                             onClose,
-                                             onSave,
-                                         }: GoalSettingModalProps) {
-    const [weeklyHours, setWeeklyHours] = useState('10');
-    const [monthlyDays, setMonthlyDays] = useState('20');
+    visible,
+    onClose,
+}: GoalSettingModalProps) {
+    const [weeklyHours, setWeeklyHours] = useState('0');
+    const [monthlyDays, setMonthlyDays] = useState('0');
 
     const { colors } = useTheme();
 
-    const handleSave = () => {
-        onSave?.(Number(weeklyHours), Number(monthlyDays));
+    const handleSave = async () => {
+        await saveGoals({
+            weeklyHours: Number(weeklyHours),
+            monthlyDays: Number(monthlyDays),
+        });
         onClose();
     };
+
+    const { getCurrentGoals, saveGoals, loading } = useGoal();
+
+    useEffect(() => {
+        if (visible) {
+            const fetchGoals = async () => {
+                const goals = await getCurrentGoals();
+                if (goals && goals.weeklyHours != null) {
+                    setWeeklyHours(String(goals.weeklyHours));
+                } else {
+                    setWeeklyHours('0');
+                }
+                if (goals && goals.monthlyDays != null) {
+                    setMonthlyDays(String(goals.monthlyDays));
+                } else {
+                    setMonthlyDays('0');
+                }
+            };
+            fetchGoals();
+        }
+    }, [visible]);
 
     return (
         <Modal transparent animationType="fade" visible={visible}>

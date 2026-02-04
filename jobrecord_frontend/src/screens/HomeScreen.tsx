@@ -14,6 +14,8 @@ import {
   getCategoryDurationMap,
   getCategoryRatioMap,
 } from '@/src/utils/activityStats';
+import ProgressBar from "@/src/components/ProgressBar";
+import {useGoal} from "@/src/hooks/useGoal";
 
 type RootStackParamList = {
     ActivityDetailScreen: {
@@ -37,9 +39,22 @@ export default function HomeScreen(){
 
     const { activities, loading, fetchActivities, fetchActivityDetail } = useActivity();
 
-    const totalDuration = getTotalDuration(activities);
-    const categoryDurations = getCategoryDurationMap(activities);
     const categoryRatios = getCategoryRatioMap(activities);
+
+    // Add state for goals
+    const [weeklyHours, setWeeklyHours] = useState<number>(0);
+    const [monthlyDays, setMonthlyDays] = useState<number>(0);
+    const { getCurrentGoals } = useGoal();
+
+    const currentHours = Math.floor(getTotalDuration(activities) / 60);
+
+    const percent =
+        weeklyHours > 0
+            ? Math.min(
+                Math.floor((currentHours / weeklyHours) * 100),
+                100
+            )
+            : 0;
 
     useFocusEffect(
         useCallback(() => {
@@ -50,6 +65,11 @@ export default function HomeScreen(){
     useFocusEffect(
         useCallback(() => {
             fetchActivities();
+            (async () => {
+                const data = await getCurrentGoals();
+                setWeeklyHours(data?.weeklyHours ?? 0);
+                setMonthlyDays(data?.monthlyDays ?? 0);
+            })();
         }, [fetchActivityDetail])
     );
 
@@ -66,16 +86,31 @@ export default function HomeScreen(){
 
             <View style={styles.title}>
                 <AppText variant="caption" color="secondary">
-                    2025년 1월
+                    이번 주 목표 달성률
                 </AppText>
-                <AppText variant="headingLarge">
-                    안녕하세요, 지원님 👋
+
+                <AppText variant="headingLarge" style={{ marginTop:4 }}>
+                    {percent}%
+                </AppText>
+
+                <ProgressBar percent={percent} />
+
+                <AppText variant="caption" color="secondary">
+                    {currentHours}시간 / {weeklyHours}시간
                 </AppText>
             </View>
 
             <View style={styles.statRow}>
-                <StatCard title="총 활동 시간" value={47} label="시간" />
-                <StatCard title="활동 일수" value={18} label="일" />
+                <StatCard
+                  title="총 활동 시간"
+                  value={Math.floor(getTotalDuration(activities) / 60)}
+                  label="시간"
+                />
+                <StatCard
+                  title="활동 일수"
+                  value={new Set(activities.map(a => a.activityDate)).size}
+                  label="일"
+                />
             </View>
 
             <View style={styles.section}>

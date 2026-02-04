@@ -14,16 +14,27 @@ import {
   getCategoryDurationMap,
   getCategoryRatioMap,
 } from '@/src/utils/activityStats';
+import { useMonthlyReport } from '@/src/hooks/useMonthlyReport';
+import { MonthlyWeeklyBarChart } from '@/src/components/MonthlyWeeklyBarChart';
 
 export default function ReportScreen() {
     const { colors } = useTheme();
 
-    const { activities, loading } = useActivity();
+    const { activities, loading,refetch } = useActivity();
 
-    const [currentDate, setCurrentDate] = useState(new Date(2025, 0)); // 2025년 1월
+
+    const [currentDate, setCurrentDate] = useState(new Date(2026, 0)); // 2025년 1월
+
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
+
+    const {
+      labels,
+      data,
+      loading: monthlyLoading,
+      isEmpty: monthlyEmpty,
+    } = useMonthlyReport(year, month);
 
     // Filter activities for the selected year and month
     const filteredActivities = activities.filter(a => {
@@ -35,7 +46,6 @@ export default function ReportScreen() {
     });
 
     const totalDuration = getTotalDuration(filteredActivities);
-    const categoryDurations = getCategoryDurationMap(filteredActivities);
     const categoryRatios = getCategoryRatioMap(filteredActivities);
 
     // Compute summary values
@@ -52,6 +62,7 @@ export default function ReportScreen() {
     const [focusKey, setFocusKey] = useState(0);
 useFocusEffect(
     useCallback(() => {
+        refetch();
         setFocusKey(prev => prev + 1);
         setCurrentDate(new Date(2026, 0)); // 초기 기준 월로 리셋
         setShowDatePicker(false);
@@ -62,7 +73,6 @@ useFocusEffect(
     const [showDatePicker, setShowDatePicker] = useState(false);
     const [tempYear, setTempYear] = useState(year);
     const [tempMonth, setTempMonth] = useState(month);
-
     const changeMonth = (direction: 'prev' | 'next') => {
         setCurrentDate(prev => {
             const nextDate = new Date(prev);
@@ -70,7 +80,6 @@ useFocusEffect(
             return nextDate;
         });
     };
-
 
     return (
         <SafeAreaView
@@ -155,7 +164,7 @@ useFocusEffect(
                             />
 
                             <View style={styles.donutCenter}>
-                                <AppText variant="headingMedium">{totalDuration > 0 ? Math.round(totalDuration / 60) : 0}</AppText>
+                                <AppText variant="headingMedium">5</AppText>
                                 <AppText variant="caption" color="secondary">
                                     카테고리
                                 </AppText>
@@ -196,13 +205,21 @@ useFocusEffect(
                 </View>
 
                 <View style={[styles.card, { backgroundColor: colors.bg.card }]}>
-                    <AppText variant="headingMedium">주간 활동 추이</AppText>
-                    <View
-                      style={[
-                        styles.weeklyPlaceholder,
-                        { backgroundColor: colors.bg.subtle },
-                      ]}
-                    />
+                    <AppText variant="headingMedium">월간 활동 추이</AppText>
+
+                    {monthlyLoading ? (
+                        <View style={styles.weeklyPlaceholder} />
+                    ) : monthlyEmpty ? (
+                        <AppText
+                            variant="caption"
+                            color="secondary"
+                            style={{ marginTop: 16, textAlign: 'center' }}
+                        >
+                            이번 달 활동 기록이 없습니다
+                        </AppText>
+                    ) : (
+                        <MonthlyWeeklyBarChart labels={labels} data={data} />
+                    )}
                 </View>
             </ScrollView>
             {/* Month/Year Picker Modal */}
