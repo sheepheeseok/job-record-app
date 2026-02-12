@@ -5,6 +5,7 @@ import com.jobrecord.backend.entity.Activity;
 import com.jobrecord.backend.entity.User;
 import com.jobrecord.backend.repository.ActivityRepository;
 import com.jobrecord.backend.repository.UserRepository;
+import com.jobrecord.backend.repository.projection.CategoryCount;
 import com.jobrecord.backend.repository.projection.DailyActivityCount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -128,5 +130,105 @@ public class ActivityService {
         }
 
         return new MonthlyReportResponse(days, counts);
+    }
+
+    public AnalysisSummaryResponse getAnalysisSummary (
+        Long userId,
+        LocalDate startDate,
+        LocalDate endDate
+        ) {
+
+        List<CategoryCount> categoryCounts =
+                activityRepository.findCategoryCounts(userId, startDate, endDate);
+
+        Long totalActivities =
+                activityRepository.findTotalActivities(userId, startDate, endDate);
+
+        Long activeDays =
+                activityRepository.findActiveDays(userId, startDate, endDate);
+
+        Long totalDurationMinutes =
+                activityRepository.findTotalDuration(userId, startDate, endDate);
+
+        if (totalActivities == null) totalActivities = 0L;
+        if (activeDays == null) activeDays = 0L;
+        if (totalDurationMinutes == null) totalDurationMinutes = 0L;
+
+        Map<String, Long> categoryMap = categoryCounts.stream()
+                .collect(Collectors.toMap(
+                        CategoryCount::getCategory,
+                        CategoryCount::getCount
+                ));
+
+        double effort = getRatio(categoryMap.get("EFFORT"), totalActivities);
+        double complete = getRatio(categoryMap.get("COMPLETE"), totalActivities);
+        double explore = getRatio(categoryMap.get("EXPLORE"), totalActivities);
+        double support = getRatio(categoryMap.get("SSUPPORT"), totalActivities);
+        double feedback = getRatio(categoryMap.get("FEEDBACK"), totalActivities);
+
+        double completionRatio =
+                (effort + explore) > 0
+                        ? complete / (effort + explore)
+                        : 0;
+
+        double consistencyScore =
+                totalActivities > 0
+                        ? Math.min((activeDays.doubleValue() / 30.0) * 100, 100)
+                        : 0;
+
+        String tendencyType =
+                determineTendency(complete, explore, effort, completionRatio, consistencyScore);
+
+        return new AnalysisSummaryResponse(
+                tendencyType,
+                totalActivities,
+                activeDays,
+                totalDurationMinutes / 60,
+                new AnalysisSummaryResponse.CategoryRatio(
+                        effort,
+                        complete,
+                        explore,
+                        support,
+                        feedback
+                ),
+                round(completionRatio),
+                round(consistencyScore)
+        );
+    }
+
+    private double getRatio(Long count, Long total) {
+        if (count == null || total == 0) return 0;
+        return round((count.doubleValue() / total.doubleValue()) * 100);
+    }
+
+    private double round(double value) {
+        return Math.round(value * 100.0) / 100.0;
+    }
+
+    private String determineTendency(
+            double complete,
+            double explore,
+            double effort,
+            double completionRatio,
+            double consistencyScore
+    ) {
+
+        if (complete >= 35 && consistencyScore >= 60) {
+            return "CONSISTENT";
+        }
+
+        if (complete >= 30) {
+            return "EXECUTION";
+        }
+
+        if (explore >= 30) {
+            return "EXPLORATION";
+        }
+
+        if (completionRatio < 0.25 && effort >= 40) {
+            return "PREPARATION";
+        }
+
+        return "UNBALANCED";
     }
 }

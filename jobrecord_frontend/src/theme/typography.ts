@@ -8,12 +8,20 @@ export const typography = {
         letterSpacing: -0.22,
     },
 
+    headingSemiLarge: {
+        fontFamily: fonts.bold,
+        fontSize: 18,
+        lineHeight: 24,
+        letterSpacing: -0.08,
+    },
+
     headingMedium: {
         fontFamily: fonts.bold,
         fontSize: 14,
         lineHeight: 24,
         letterSpacing: -0.08,
     },
+
 
     headingRegular: {
         fontFamily: fonts.medium,

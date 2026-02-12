@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView } from 'react-native';
+import {View, StyleSheet, ScrollView, Pressable} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/src/theme/ThemeContext';
 import AppText from '../components/AppText'
@@ -35,7 +35,7 @@ export default function HomeScreen(){
     const { colors } = useTheme();
     const [focusKey, setFocusKey] = useState(0);
     const navigation =
-        useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+        useNavigation<any>();
 
     const { activities, loading, fetchActivities, fetchActivityDetail } = useActivity();
 
@@ -99,6 +99,26 @@ export default function HomeScreen(){
                     {currentHours}시간 / {weeklyHours}시간
                 </AppText>
             </View>
+
+            {/* AI 분석 배너 */}
+            <Pressable
+              onPress={() => navigation.navigate('AISummaryScreen')}
+              style={[
+                styles.aiBanner,
+                { backgroundColor: colors.bg.card },
+              ]}
+            >
+              <View style={styles.aiBannerContent}>
+                <View style={styles.aiTextWrapper}>
+                  <AppText variant="headingMedium">
+                    AI 활동 분석
+                  </AppText>
+                  <AppText variant="caption" color="secondary">
+                    나의 활동 성향과 이번 주 추천을 확인해보세요
+                  </AppText>
+                </View>
+              </View>
+            </Pressable>
 
             <View style={styles.statRow}>
                 <StatCard
@@ -202,9 +222,11 @@ export default function HomeScreen(){
                     <AppText variant="headingMedium">
                         최근 활동
                     </AppText>
+                    <Pressable onPress={() => navigation.navigate('Activity')}>
                     <AppText variant="caption" color="secondary">
                         전체보기
                     </AppText>
+                    </Pressable>
                 </View>
 
                 {activities.slice(0, 4).map(activity => (
@@ -237,6 +259,30 @@ const styles = StyleSheet.create({
 
     title: {
         gap: 4,
+    },
+
+    aiBanner: {
+        borderRadius: 20,
+        padding: 20,
+        marginTop: 24,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 6,
+        },
+        shadowOpacity: 0.06,
+        shadowRadius: 20,
+    },
+
+    aiBannerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+
+    aiTextWrapper: {
+        flex: 1,
+        gap: 6,
     },
 
     content: {

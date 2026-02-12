@@ -6,6 +6,7 @@ import LoginScreen from "@/src/screens/LoginScreen";
 import SignUpScreen from "@/src/screens/SignUpScreen";
 import FindAccountScreen from "@/src/screens/FindAccountScreen";
 import ActivityDetailScreen from "@/src/screens/ActivityDetailScreen";
+import AISummaryScreen from "@/src/screens/AISummaryScreen";
 
 export type RootStackParamList = {
     Tabs: undefined;
@@ -15,6 +16,7 @@ export type RootStackParamList = {
     SignUpScreen: undefined;
     FindAccountScreen: undefined;
     ActivityDetailScreen: { activityId: number };
+    AISummaryScreen: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -29,6 +31,7 @@ export default function RootNavigator() {
                 <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
                 <Stack.Screen name="FindAccountScreen" component={FindAccountScreen} />
                 <Stack.Screen name="ActivityDetailScreen" component={ActivityDetailScreen} />
+                <Stack.Screen name="AISummaryScreen" component={AISummaryScreen} />
             </Stack.Navigator>
     );
 }

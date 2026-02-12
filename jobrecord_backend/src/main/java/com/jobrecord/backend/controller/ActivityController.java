@@ -3,6 +3,7 @@ package com.jobrecord.backend.controller;
 import com.jobrecord.backend.dto.activity.*;
 import com.jobrecord.backend.security.CustomUserDetails;
 import com.jobrecord.backend.service.ActivityService;
+import com.jobrecord.backend.service.AnalysisAIService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.List;
 public class ActivityController {
 
     private final ActivityService activityService;
+    private final AnalysisAIService analysisAIService;
 
     @GetMapping
     public ResponseEntity<List<ActivityListResponse>> getMyActivities(
@@ -84,6 +86,30 @@ public class ActivityController {
                 userDetails.getUserId(),
                 startDate,
                 endDate
+        );
+    }
+
+    @GetMapping("/analysis")
+    public ResponseEntity<AnalysisSummaryResponse> getAnalysis(
+            @RequestParam Long userId,
+            @RequestParam String startDate,
+            @RequestParam String endDate
+    ) {
+
+        LocalDate start = LocalDate.parse(startDate);
+        LocalDate end = LocalDate.parse(endDate);
+
+        return ResponseEntity.ok(
+                activityService.getAnalysisSummary(userId, start, end)
+        );
+    }
+
+    @PostMapping("/analysis/ai")
+    public ResponseEntity<AIAnalysisResponse> analyzeWithAI(
+            @RequestBody AnalysisSummaryResponse summary
+    ) {
+        return ResponseEntity.ok(
+                analysisAIService.generateAnalysisComment(summary)
         );
     }
 }
